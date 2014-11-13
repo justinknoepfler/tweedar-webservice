@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Configures the Camel Context -->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:camel="http://camel.apache.org/schema/spring"
+	xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+	<bean id="testService" class="tweedar.service.TestService" />
+	<bean id="jdbcQueryTranslator" class="tweedar.jdbc.QueryTranslator" />
+
+	<!-- JDBC data source -->
+	<bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource"
+		destroy-method="close">
+		<property name="driverClassName" value="com.mysql.jdbc.Driver" />
+		<property name="url"
+			value="jdbc:mysql://us-cdbr-east-05.cleardb.net:3306/heroku_0a9d3796bfabb21" />
+		<property name="username" value="b09735b8db0848" />
+		<property name="password" value="7c1d1501" />
+	</bean>
+
+	<camel:camelContext xmlns="http://camel.apache.org/schema/spring">
+
+		<dataFormats>
+			<json id="jackson" library="Jackson" />
+		</dataFormats>
+		
+		<camel:route>
+			<camel:from uri="jetty:http://0.0.0.0:9002/tweedar/api/test" />
+			<camel:bean ref="testService" method="test" />
+		</camel:route>
+
+		<camel:route>
+			<camel:from uri="seda:test-getData" />
+			<camel:bean ref="jdbcQueryTranslator" method="getTestJdbcQuery" />
+			<camel:to uri="jdbc:dataSource" />
+			<camel:marshal ref="jackson" />
+			<camel:inOnly uri="file:test-response.json"/>
+		</camel:route>
+	</camel:camelContext>
+
+</beans>
