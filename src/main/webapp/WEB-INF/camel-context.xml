@@ -20,24 +20,33 @@
 		<property name="password" value="7c1d1501" />
 	</bean>
 
-	<camel:camelContext xmlns="http://camel.apache.org/schema/spring">
-
+	<camelContext xmlns="http://camel.apache.org/schema/spring">
+		<rest path="/api/">
+			<get uri="/timestamp/">
+				<to uri="log:timestampTest"/>
+			</get>
+		</rest>	
+		
+		
+		
 		<dataFormats>
 			<json id="jackson" library="Jackson" />
 		</dataFormats>
 		
-		<camel:route>
-			<camel:from uri="jetty:http://0.0.0.0:9002/tweedar/api/test" />
-			<camel:bean ref="testService" method="test" />
-		</camel:route>
+		<route>
+			<from uri="jetty:http://0.0.0.0:9002/tweedar/api/test" />
+			<bean ref="testService" method="test" />
+		</route>
 
-		<camel:route>
-			<camel:from uri="seda:test-getData" />
-			<camel:bean ref="jdbcQueryTranslator" method="getTestJdbcQuery" />
-			<camel:to uri="jdbc:dataSource" />
-			<camel:marshal ref="jackson" />
-			<camel:inOnly uri="file:test-response.json"/>
-		</camel:route>
-	</camel:camelContext>
+		<route>
+			<from uri="seda:test-getData" />
+			<bean ref="jdbcQueryTranslator" method="getTestJdbcQuery" />
+			<to uri="jdbc:dataSource" />
+			<marshal ref="jackson" />
+			<inOnly uri="file:test-response.json"/>
+		</route>
+			
+	</camelContext>
+
 
 </beans>
