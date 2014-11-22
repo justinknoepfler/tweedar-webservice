@@ -21,31 +21,45 @@
 	</bean>
 
 	<camelContext xmlns="http://camel.apache.org/schema/spring">
-		<rest path="/api/">
-			<get uri="/timestamp/">
-				<to uri="log:timestampTest"/>
-			</get>
-		</rest>	
-		
-		
-		
+
 		<dataFormats>
 			<json id="jackson" library="Jackson" />
 		</dataFormats>
-		
-		<route>
-			<from uri="jetty:http://0.0.0.0:9002/tweedar/api/test" />
-			<bean ref="testService" method="test" />
-		</route>
 
 		<route>
 			<from uri="seda:test-getData" />
 			<bean ref="jdbcQueryTranslator" method="getTestJdbcQuery" />
 			<to uri="jdbc:dataSource" />
 			<marshal ref="jackson" />
-			<inOnly uri="file:test-response.json"/>
+			<inOnly uri="file:test-response.json" />
 		</route>
-			
+
+		<route>
+			<from uri="spark-rest:get:/api/gridmap" />
+			<to uri="seda:get-gridmaps" />
+		</route>
+
+		<route>
+			<from uri="spark-rest:get:/api/gridmap/:gridmapId" />
+			<to uri="seda:get-gridmap-id" />
+		</route>
+
+		<route>
+			<from uri="seda:get-gridmaps" />
+			<bean ref="jdbcQueryTranslator" method="getGridmaps" />
+			<to uri="jdbc:dataSource" />
+			<marshal ref="jackson" />
+			<to uri="log:get-gridmaps" />
+		</route>
+
+		<route>
+			<from uri="seda:get-gridmap-id" />
+			<bean ref="jdbcQueryTranslator" method="getGridmapId" />
+			<to uri="jdbc:dataSource" />
+			<marshal ref="jackson" />
+			<to uri="log:get-gridmap-id" />
+		</route>
+
 	</camelContext>
 
 
