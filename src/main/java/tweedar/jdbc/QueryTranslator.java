@@ -48,7 +48,9 @@ public class QueryTranslator {
 		String query = "SELECT time_start, time_end, affect_score FROM gridmap, bin WHERE "
 				+ "gridmap.time_start >= " + startTime + " "
 						+ "&& gridmap.time_end <= " + endTime + 
-						" && bin.x_index = " + x_coord + " && bin.y_index = " + y_coord + ";";
+						" && bin.x_index = " + x_coord + " && bin.y_index = " + y_coord 
+						+ " && gridmap.id = bin.gridmap_id"
+						+ " ORDER BY time_start ASC;";
 		exchange.getOut().setBody(query);
 		
 		LOGGER.log(Level.ERROR, "query");
