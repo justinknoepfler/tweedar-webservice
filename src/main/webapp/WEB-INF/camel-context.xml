@@ -9,6 +9,7 @@
 
 	<bean id="testService" class="tweedar.service.TestService" />
 	<bean id="jdbcQueryTranslator" class="tweedar.jdbc.QueryTranslator" />
+	<bean id="timeseriesAggregationStrategy" class="tweedar.jdbc.TimeseriesQueryAggregationStrategy" />
 
 	<!-- JDBC data source -->
 	<bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource"
@@ -43,6 +44,11 @@
 			<from uri="spark-rest:get:/api/gridmap/:gridmapId" />
 			<to uri="seda:get-gridmap-id" />
 		</route>
+		
+		<route>
+			<from uri="spark-rest:post:/api/timeseries"/>
+			<to uri="seda:get-timeseries-info"/>
+		</route>
 
 		<route>
 			<from uri="seda:get-gridmaps" />
@@ -58,6 +64,28 @@
 			<to uri="jdbc:dataSource" />
 			<marshal ref="jackson" />
 			<to uri="log:get-gridmap-id" />
+		</route>
+		
+		<route>
+			<from uri="seda:get-timeseries-info" />
+			<unmarshal ref="jackson" />
+			<bean ref="jdbcQueryTranslator" method="moveTimestampInfoToHeaders"/>
+			<split strategyRef="timeseriesAggregationStrategy">
+				<jsonpath>$.gridpoints</jsonpath>
+				<setProperty propertyName="gridpoint_id">
+					<jsonpath>$.id</jsonpath>
+				</setProperty>
+				<setProperty propertyName="gridpoint_x_index">
+					<jsonpath>$.x_index</jsonpath>
+				</setProperty>
+				<setProperty propertyName="gridpoint_y_index">
+					<jsonpath>$.y_index</jsonpath>
+				</setProperty>
+				<bean ref="jdbcQueryTranslator" method="getTimeseriesInfo" />
+				<to uri="jdbc:dataSource" />
+			</split>
+			<marshal ref="jackson" />
+			<to uri="log:get-timeseries-info" />
 		</route>
 
 	</camelContext>
